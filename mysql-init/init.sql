@@ -1,3 +1,6 @@
+create database social_pqn;
+use social_pqn;
+
 -- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: social_pqn
