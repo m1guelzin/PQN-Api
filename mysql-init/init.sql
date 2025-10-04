@@ -68,6 +68,8 @@ CREATE TABLE `usuarios` (
 -- Dumping data for table `usuarios`
 --
 
+insert into usuarios
+
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;

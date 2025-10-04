@@ -1,74 +1,74 @@
-const db = require("../db/connect");
-const bcrypt = require("bcrypt");
+const pool = require("../db/connect");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-// Para simplificar, vamos criar um admin inicial no banco
-// Lembre-se: em produção nunca use senha em texto puro
+const SECRET = "chave_secreta_pqn"; // altere em produção
 
 class UserController {
-  // Registrar usuário admin (pode usar para criar outro admin se quiser)
+  // Registrar admin
   static async registerAdmin(req, res) {
-    try {
-      const { nome, email, senha } = req.body;
+    const { nome, email, senha } = req.body;
 
-      if (!nome || !email || !senha) {
-        return res.status(400).json({ error: "Nome, email e senha são obrigatórios." });
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ message: "Preencha todos os campos." });
+    }
+
+    try {
+      const [exists] = await pool.query("SELECT * FROM usuarios WHERE email = ?", [email]);
+      if (exists.length > 0) {
+        return res.status(400).json({ message: "E-mail já cadastrado." });
       }
 
-      // Hash da senha
-      const hashedPassword = await bcrypt.hash(senha, 10);
-
-      const [result] = await db.execute(
-        "INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)",
-        [nome, email, hashedPassword]
-      );
-
-      return res.status(201).json({
-        message: "Admin registrado com sucesso!",
-        id: result.insertId,
+      const hash = await bcrypt.hash(senha, 10);
+      await pool.query("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)", [
         nome,
-        email
-      });
-    } catch (err) {
-      console.error("Erro ao registrar admin:", err);
-      return res.status(500).json({ error: "Erro interno do servidor." });
+        email,
+        hash,
+      ]);
+
+      res.status(201).json({ message: "Usuário criado com sucesso!" });
+    } catch (error) {
+      console.error("Erro ao criar admin:", error);
+      res.status(500).json({ message: "Erro no servidor." });
     }
   }
 
-  // Login do admin
+  // Login
   static async login(req, res) {
+    const { email, senha } = req.body;
+
     try {
-      const { email, senha } = req.body;
-
-      if (!email || !senha) {
-        return res.status(400).json({ error: "Email e senha são obrigatórios." });
-      }
-
-      const [rows] = await db.execute(
-        "SELECT * FROM usuarios WHERE email = ?",
-        [email]
-      );
-
-      if (rows.length === 0) {
-        return res.status(401).json({ error: "Email ou senha inválidos." });
-      }
+      const [rows] = await pool.query("SELECT * FROM usuarios WHERE email = ?", [email]);
+      if (rows.length === 0)
+        return res.status(404).json({ message: "Usuário não encontrado." });
 
       const user = rows[0];
+      const valid = await bcrypt.compare(senha, user.senha);
 
-      // Verifica senha
-      const match = await bcrypt.compare(senha, user.senha);
-      if (!match) {
-        return res.status(401).json({ error: "Email ou senha inválidos." });
-      }
+      if (!valid)
+        return res.status(401).json({ message: "Senha incorreta." });
 
-      // Retorna dados do usuário (sem senha)
-      return res.status(200).json({
-        id: user.id,
-        nome: user.nome,
-        email: user.email
+      const token = jwt.sign({ id: user.id, nome: user.nome }, SECRET, { expiresIn: "1h" });
+
+      res.status(200).json({
+        message: "Login bem-sucedido!",
+        token,
+        user: { id: user.id, nome: user.nome, email: user.email },
       });
-    } catch (err) {
-      console.error("Erro no login:", err);
-      return res.status(500).json({ error: "Erro interno do servidor." });
+    } catch (error) {
+      console.error("Erro no login:", error);
+      res.status(500).json({ message: "Erro no servidor." });
+    }
+  }
+
+  // Listar usuários (opcional)
+  static async listUsers(req, res) {
+    try {
+      const [rows] = await pool.query("SELECT id, nome, email, criado_em FROM usuarios");
+      res.status(200).json(rows);
+    } catch (error) {
+      console.error("Erro ao listar usuários:", error);
+      res.status(500).json({ message: "Erro no servidor." });
     }
   }
 }
