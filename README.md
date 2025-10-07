@@ -118,7 +118,7 @@ PATCH	/api/checkin/:codigo -> *Fazer check-in de um participante*
 
 - 👨‍💻 Desenvolvido por
 
-Miguel Garrido Souza
+Miguel Garrido Souza - www.linkedin.com/in/miguel-garrido-dev
 
 📘 Projeto PQN – Pequeno
 
