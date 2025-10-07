@@ -49,7 +49,9 @@ JavaScript (ES6+)
 🛠️ Como Executar o Projeto
 -
 🔹 1. Clonar o repositório
-git clone https://github.com/seuusuario/pqn-ticket.git
+git clone https://github.com/m1guelzin/PQN-Api ( API )
+git clone https://github.com/m1guelzin/PQN-Interface ( FrontEnd )
+
 
 🔹 2. Configurar o banco de dados
 
